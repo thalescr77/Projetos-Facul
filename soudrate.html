@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundRate — Recomendações de Música</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --surface-0: #f4f3f0;
+      --surface-1: #ebebeb;
+      --surface-2: #ffffff;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-muted: #888780;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.18);
+      --radius: 8px;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --purple-mid: #7F77DD;
+      --purple-dark: #3C3489;
+      --purple-light: #EEEDFE;
+      --star-color: #FAC775;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface-0: #1a1a18;
+        --surface-1: #242422;
+        --surface-2: #2c2c2a;
+        --text-primary: #f0ede8;
+        --text-secondary: #b4b2a9;
+        --text-muted: #888780;
+        --border: rgba(255,255,255,0.09);
+        --border-strong: rgba(255,255,255,0.16);
+        --purple-light: #26215C;
+        --purple-dark: #AFA9EC;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--surface-0);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+ 
+    /* TOPBAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      border-bottom: 0.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface-0);
+      z-index: 100;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    .logo i { font-size: 22px; color: var(--purple-mid); }
+    .nav-tabs { display: flex; gap: 4px; }
+    .tab {
+      background: none;
+      border: none;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-family: var(--font-sans);
+    }
+    .tab.active { background: var(--surface-2); color: var(--text-primary); font-weight: 500; border: 0.5px solid var(--border); }
+    .tab:hover:not(.active) { background: var(--surface-1); }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-1);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 12px;
+      height: 36px;
+      width: 220px;
+    }
+    .search-bar i { color: var(--text-muted); font-size: 16px; }
+    .search-bar input {
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      color: var(--text-primary);
+      width: 100%;
+      font-family: var(--font-sans);
+    }
+    .search-bar input::placeholder { color: var(--text-muted); }
+ 
+    /* HERO */
+    .hero {
+      padding: 2rem 1.5rem 1rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .hero h1 { font-size: 26px; font-weight: 500; }
+    .hero p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+    .filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-sans);
+    }
+    .filter-btn.active { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple-dark); }
+    .filter-btn:hover:not(.active) { background: var(--surface-1); }
+ 
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 1rem;
+      padding: 0 1.5rem 3rem;
+    }
+    .card {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.2s;
+    }
+    .card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+    .cover {
+      width: 100%;
+      aspect-ratio: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cover-icon {
+      font-size: 54px;
+      color: white;
+      opacity: 0.9;
+      transition: transform 0.4s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .card:hover .cover-icon { transform: rotate(12deg) scale(1.1); }
+    .cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover .cover-overlay { opacity: 1; }
+    .fav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-size: 20px;
+      margin-left: auto;
+      line-height: 1;
+      transition: transform 0.15s;
+    }
+    .fav-btn:hover { transform: scale(1.2); }
+    .card-body { padding: 12px; }
+    .card-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-artist { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; gap: 4px; }
+    .stars-display { display: flex; align-items: center; gap: 1px; }
+    .star { color: var(--star-color); font-size: 13px; }
+    .star.empty { color: var(--border-strong); }
+    .rating-val { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
+    .genre-tag {
+      font-size: 11px;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+      border-radius: 20px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+ 
+    /* EMPTY STATE */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state i { font-size: 40px; margin-bottom: 1rem; display: block; }
+    .empty-state p { font-size: 15px; }
+ 
+    /* MODAL */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(2px);
+    }
+    .modal {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border-strong);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-header {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--surface-2);
+      border-radius: 16px 16px 0 0;
+    }
+    .modal-cover {
+      width: 80px;
+      height: 80px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-cover i { font-size: 32px; color: white; }
+    .modal-info { flex: 1; min-width: 0; }
+    .modal-title { font-size: 18px; font-weight: 500; }
+    .modal-artist { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
+    .modal-genre {
+      font-size: 12px;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+      border-radius: 20px;
+      padding: 2px 8px;
+      display: inline-block;
+      margin-top: 6px;
+    }
+    .modal-avg { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 13px; color: var(--text-muted); }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 20px;
+      align-self: flex-start;
+      padding: 2px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 1.25rem; }
+    .section-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .star-input { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      transition: transform 0.1s;
+      color: var(--border-strong);
+      line-height: 1;
+    }
+    .star-btn.lit { color: var(--star-color); }
+    .star-btn:hover { transform: scale(1.2); }
+    textarea {
+      width: 100%;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      background: var(--surface-1);
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: var(--purple-mid); }
+    .modal-actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--purple-mid);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s;
+      font-family: var(--font-sans);
+    }
+    .btn-primary:hover { background: #534AB7; }
+    .btn-ghost {
+      background: none;
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 8px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background 0.15s;
+      font-family: var(--font-sans);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-ghost:hover { background: var(--surface-1); }
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--text-primary);
+      color: var(--surface-0);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 300;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+ 
+    /* REVIEWS */
+    .reviews-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 0.5px solid var(--border); }
+    .review-item {
+      background: var(--surface-1);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .review-stars { font-size: 13px; color: var(--star-color); margin-bottom: 4px; }
+    .review-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+    .review-date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+ 
+    /* SECTION TITLE */
+    .section-title {
+      font-size: 15px;
+      font-weight: 500;
+      padding: 1.5rem 1.5rem 0.75rem;
+      border-top: 0.5px solid var(--border);
+      margin-top: 0.5rem;
+    }
+ 
+    @media (max-width: 600px) {
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .search-bar { width: 100%; }
+      .hero { flex-direction: column; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+ 
+<div id="app">
+  <nav class="topbar">
+    <div class="logo"><i class="ti ti-vinyl"></i> SoundRate</div>
+    <div class="nav-tabs">
+      <button class="tab active" onclick="setView('browse')" id="tab-browse">Explorar</button>
+      <button class="tab" onclick="setView('favorites')" id="tab-fav">Favoritos</button>
+      <button class="tab" onclick="setView('reviewed')" id="tab-rev">Avaliados</button>
+    </div>
+    <div class="search-bar">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Buscar álbum ou artista..." id="search-input" oninput="renderGrid()">
+    </div>
+  </nav>
+  <div id="main-content"></div>
+</div>
+ 
+<div id="modal-container"></div>
+<div class="toast" id="toast"></div>
+ 
+<script>
+const albums = [
+  {id:1,  title:"Astral Weeks",           artist:"Van Morrison",     genre:"Folk",       year:1968, color:"#534AB7", icon:"ti-music",       avg:4.8},
+  {id:2,  title:"Thriller",               artist:"Michael Jackson",  genre:"Pop",        year:1982, color:"#993C1D", icon:"ti-stars",       avg:4.9},
+  {id:3,  title:"Kind of Blue",           artist:"Miles Davis",      genre:"Jazz",       year:1959, color:"#0F6E56", icon:"ti-wave-sine",   avg:4.7},
+  {id:4,  title:"OK Computer",            artist:"Radiohead",        genre:"Rock",       year:1997, color:"#3B6D11", icon:"ti-cpu",         avg:4.6},
+  {id:5,  title:"Lemonade",               artist:"Beyoncé",          genre:"R&B",        year:2016, color:"#854F0B", icon:"ti-lemon",       avg:4.8},
+  {id:6,  title:"Dark Side of the Moon",  artist:"Pink Floyd",       genre:"Rock",       year:1973, color:"#185FA5", icon:"ti-moon",        avg:4.9},
+  {id:7,  title:"Blue",                   artist:"Joni Mitchell",    genre:"Folk",       year:1971, color:"#993556", icon:"ti-cloud",       avg:4.7},
+  {id:8,  title:"Illmatic",               artist:"Nas",              genre:"Hip-Hop",    year:1994, color:"#444441", icon:"ti-microphone",  avg:4.8},
+  {id:9,  title:"Random Access Memories", artist:"Daft Punk",        genre:"Eletrônico", year:2013, color:"#533A2B", icon:"ti-robot",       avg:4.5},
+  {id:10, title:"Rumours",                artist:"Fleetwood Mac",    genre:"Rock",       year:1977, color:"#72243E", icon:"ti-feather",     avg:4.6},
+  {id:11, title:"To Pimp a Butterfly",    artist:"Kendrick Lamar",   genre:"Hip-Hop",    year:2015, color:"#264228", icon:"ti-butterfly",   avg:4.9},
+  {id:12, title:"Abbey Road",             artist:"The Beatles",      genre:"Rock",       year:1969, color:"#2B3E6B", icon:"ti-road",        avg:4.8},
+  {id:13, title:"Nevermind",              artist:"Nirvana",          genre:"Rock",       year:1991, color:"#1A4D6B", icon:"ti-swim",        avg:4.7},
+  {id:14, title:"Purple Rain",            artist:"Prince",           genre:"Pop",        year:1984, color:"#4A2E6E", icon:"ti-cloud-rain",  avg:4.8},
+  {id:15, title:"Blonde",                 artist:"Frank Ocean",      genre:"R&B",        year:2016, color:"#B07A30", icon:"ti-beach",       avg:4.8},
+  {id:16, title:"Miseducation of LH",     artist:"Lauryn Hill",      genre:"R&B",        year:1998, color:"#7A3B1E", icon:"ti-book",        avg:4.9},
+];
+ 
+const genres = ['Todos','Rock','Pop','Jazz','Folk','R&B','Hip-Hop','Eletrônico'];
+ 
+const state = {
+  favorites: new Set(JSON.parse(localStorage.getItem('sr_favs') || '[]')),
+  ratings:   JSON.parse(localStorage.getItem('sr_ratings') || '{}'),
+  reviews:   JSON.parse(localStorage.getItem('sr_reviews') || '{}'),
+  view:      'browse',
+  genre:     'Todos',
+  modalDraft: { rating: 0 }
+};
+ 
+function save() {
+  localStorage.setItem('sr_favs',    JSON.stringify([...state.favorites]));
+  localStorage.setItem('sr_ratings', JSON.stringify(state.ratings));
+  localStorage.setItem('sr_reviews', JSON.stringify(state.reviews));
+}
+ 
+function starsHTML(n, total = 5, size = 13) {
+  return Array.from({length: total}, (_, i) =>
+    `<span class="star${i < Math.round(n) ? '' : ' empty'}" style="font-size:${size}px">★</span>`
+  ).join('');
+}
+ 
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+ 
+function setView(v) {
+  state.view = v;
+  ['browse','fav','rev'].forEach(k =>
+    document.getElementById('tab-'+k).classList.remove('active'));
+  const map = {browse:'browse', favorites:'fav', reviewed:'rev'};
+  document.getElementById('tab-'+map[v]).classList.add('active');
+  renderGrid();
+}
+ 
+function setGenre(g) {
+  state.genre = g;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderGrid();
+}
+ 
+function filtered() {
+  const q = (document.getElementById('search-input') || {}).value || '';
+  return albums.filter(a => {
+    const mG = state.genre === 'Todos' || a.genre === state.genre;
+    const mQ = !q || a.title.toLowerCase().includes(q.toLowerCase()) || a.artist.toLowerCase().includes(q.toLowerCase());
+    const mV = state.view === 'browse'
+      || (state.view === 'favorites' && state.favorites.has(a.id))
+      || (state.view === 'reviewed'  && state.ratings[a.id]);
+    return mG && mQ && mV;
+  });
+}
+ 
+function cardHTML(a) {
+  const isFav   = state.favorites.has(a.id);
+  const rating  = state.ratings[a.id] || 0;
+  const display = rating || a.avg;
+  return `
+    <div class="card" onclick="openModal(${a.id})">
+      <div class="cover" style="background:${a.color}">
+        <i class="ti ${a.icon} cover-icon"></i>
+        <div class="cover-overlay">
+          <button class="fav-btn" onclick="event.stopPropagation();toggleFav(${a.id})"
+            aria-label="${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+            <i class="ti ti-heart${isFav ? '-filled' : ''}" style="color:${isFav ? '#F09595' : 'white'}"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${a.title}</div>
+        <div class="card-artist">${a.artist} · ${a.year}</div>
+        <div class="card-meta">
+          <div class="stars-display">
+            ${starsHTML(display)}
+            <span class="rating-val">${display.toFixed(1)}</span>
+          </div>
+          <span class="genre-tag">${a.genre}</span>
+        </div>
+      </div>
+    </div>`;
+}
+ 
+function renderGrid() {
+  const list  = filtered();
+  const titles = { browse: 'Explorar álbuns', favorites: 'Meus favoritos', reviewed: 'Minhas avaliações' };
+  const subs   = {
+    browse:    'Descubra, avalie e salve seus álbuns favoritos',
+    favorites: `${state.favorites.size} álbum${state.favorites.size !== 1 ? 's' : ''} salvo${state.favorites.size !== 1 ? 's' : ''}`,
+    reviewed:  `${Object.keys(state.ratings).length} álbum${Object.keys(state.ratings).length !== 1 ? 's' : ''} avaliado${Object.keys(state.ratings).length !== 1 ? 's' : ''}`
+  };
+  const filterBar = state.view === 'browse'
+    ? `<div class="filter-row">${genres.map(g =>
+        `<button class="filter-btn${state.genre === g ? ' active' : ''}" onclick="setGenre('${g}')">${g}</button>`
+      ).join('')}</div>`
+    : '';
+  const gridItems = list.length
+    ? list.map(cardHTML).join('')
+    : `<div class="empty-state">
+        <i class="ti ti-mood-empty"></i>
+        <p>${state.view === 'favorites' ? 'Nenhum favorito ainda — passe o mouse num álbum e clique em ♥' :
+            state.view === 'reviewed'  ? 'Nenhuma avaliação ainda — clique num álbum para avaliar' :
+            'Nenhum resultado encontrado'}</p>
+       </div>`;
+  document.getElementById('main-content').innerHTML = `
+    <div class="hero">
+      <div><h1>${titles[state.view]}</h1><p>${subs[state.view]}</p></div>
+      ${filterBar}
+    </div>
+    <div class="grid">${gridItems}</div>`;
+}
+ 
+function toggleFav(id) {
+  if (state.favorites.has(id)) { state.favorites.delete(id); showToast('Removido dos favoritos'); }
+  else                          { state.favorites.add(id);    showToast('Adicionado aos favoritos ♥'); }
+  save();
+  renderGrid();
+}
+ 
+function openModal(id) {
+  const a   = albums.find(x => x.id === id);
+  const rev = state.reviews[id] || [];
+  state.modalDraft = { rating: state.ratings[id] || 0 };
+ 
+  const reviewsHTML = rev.length
+    ? `<div class="reviews-section">
+        <div class="section-label">Reviews salvas (${rev.length})</div>
+        ${rev.map(r => `
+          <div class="review-item">
+            <div class="review-stars">${starsHTML(r.rating, 5, 14)}</div>
+            <div class="review-text">${r.text || '<em style="color:var(--text-muted)">Sem comentário</em>'}</div>
+            <div class="review-date">${r.date}</div>
+          </div>`).join('')}
+       </div>`
+    : '';
+ 
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Detalhes de ${a.title}">
+        <div class="modal-header">
+          <div class="modal-cover" style="background:${a.color}">
+            <i class="ti ${a.icon}"></i>
+          </div>
+          <div class="modal-info">
+            <div class="modal-title">${a.title}</div>
+            <div class="modal-artist">${a.artist} · ${a.year}</div>
+            <span class="modal-genre">${a.genre}</span>
+            <div class="modal-avg">${starsHTML(a.avg, 5, 13)} <span style="margin-left:4px">${a.avg} média geral</span></div>
+          </div>
+          <button class="modal-close" onclick="closeModal()" aria-label="Fechar"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="section-label">Sua avaliação</div>
+          <div class="star-input" id="star-row">
+            ${[1,2,3,4,5].map(i =>
+              `<button class="star-btn${i <= state.modalDraft.rating ? ' lit' : ''}"
+                onclick="setRating(${id}, ${i})"
+                aria-label="${i} estrela${i !== 1 ? 's' : ''}">★</button>`
+            ).join('')}
+          </div>
+          <div class="section-label">Escrever review</div>
+          <textarea id="review-text" placeholder="O que você achou desse álbum?"></textarea>
+          <div class="modal-actions">
+            <button class="btn-primary" onclick="submitReview(${id})">Salvar avaliação</button>
+            <button class="btn-ghost" id="fav-modal-btn" onclick="toggleFavModal(${id})">
+              <i class="ti ti-heart${state.favorites.has(id) ? '-filled' : ''}"
+                style="color:${state.favorites.has(id) ? '#F09595' : 'inherit'}"></i>
+              ${state.favorites.has(id) ? 'Remover favorito' : 'Adicionar favorito'}
+            </button>
+          </div>
+          ${reviewsHTML}
+        </div>
+      </div>
+    </div>`;
+}
+ 
+function setRating(id, n) {
+  state.modalDraft.rating = n;
+  document.querySelectorAll('#star-row .star-btn').forEach((b, i) => {
+    b.classList.toggle('lit', i < n);
+  });
+}
+ 
+function submitReview(id) {
+  const r   = state.modalDraft.rating;
+  const txt = (document.getElementById('review-text').value || '').trim();
+  if (!r) { showToast('Dê ao menos 1 estrela para salvar.'); return; }
+  state.ratings[id] = r;
+  if (!state.reviews[id]) state.reviews[id] = [];
+  state.reviews[id].unshift({
+    rating: r,
+    text:   txt,
+    date:   new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'})
+  });
+  save();
+  showToast('Avaliação salva!');
+  closeModal();
+  renderGrid();
+}
+ 
+function toggleFavModal(id) {
+  toggleFav(id);
+  const btn  = document.getElementById('fav-modal-btn');
+  const isFav = state.favorites.has(id);
+  if (btn) btn.innerHTML = `
+    <i class="ti ti-heart${isFav ? '-filled' : ''}" style="color:${isFav ? '#F09595' : 'inherit'}"></i>
+    ${isFav ? 'Remover favorito' : 'Adicionar favorito'}`;
+}
+ 
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+ 
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+ 
+renderGrid();
+</script>
+</body>
+</html>
